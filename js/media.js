@@ -105,6 +105,18 @@ const clientVideoUrls = {
     "https://res.cloudinary.com/otquvk5k/video/upload/v1787852051/SFA_12.mov",
   "SFA_13.MOV":
     "https://res.cloudinary.com/otquvk5k/video/upload/v1788111291/SFA_13.mp4",
+
+  // Diriyah Club
+  "DIR_CLUB_1.MOV":
+    "https://res.cloudinary.com/hcbv5n7p/video/upload/v1789386191/DIR_CLUB_1.mp4",
+  "DIR_CLUB_2.MOV":
+    "https://res.cloudinary.com/hcbv5n7p/video/upload/v1789386187/DIR_CLUB_2.mp4",
+  "DIR_CLUB_3.MOV":
+    "https://res.cloudinary.com/hcbv5n7p/video/upload/v1789386168/DIR_CLUB_3.mp4",
+  "DIR_CLUB_4.MOV":
+    "https://res.cloudinary.com/hcbv5n7p/video/upload/v1789386183/DIR_CLUB_4.mp4",
+  "DIR_CLUB_5.MOV":
+    "https://res.cloudinary.com/hcbv5n7p/video/upload/v1789386366/DIR_CLUB_5.mp4",
 };
 
 // ------------------------------------------------------
@@ -161,8 +173,34 @@ export function getHighlightVideoSrc(filename, root = "") {
 // ------------------------------------------------------
 // Poster / thumbnail
 // ------------------------------------------------------
+// Wherever a video is hosted on Cloudinary, we derive its
+// poster directly from Cloudinary itself — requesting the
+// exact same public asset with a `.jpg` extension and the
+// `so_0` transformation returns a JPG of the video's real
+// first frame. Cloudinary generates and caches this on the
+// CDN on first request, so it's fast and never requires
+// downloading the video itself just to get a thumbnail.
+//
+// Videos not yet uploaded to Cloudinary fall back to the
+// local /images/posters/<filename>.jpg convention, same as
+// before (silently absent until one is added there).
+// ------------------------------------------------------
+
+function toCloudinaryFirstFramePoster(videoUrl) {
+  const match = videoUrl.match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/video\/upload\/)(.+)$/);
+  if (!match) return null;
+  const [, base, rest] = match;
+  const withoutExtension = rest.replace(/\.[a-zA-Z0-9]+$/, "");
+  return `${base}so_0/${withoutExtension}.jpg`;
+}
 
 export function getPosterSrc(filename, root = "") {
+  const cloudinaryVideoUrl = clientVideoUrls[filename] || highlightVideoUrls[filename];
+  if (cloudinaryVideoUrl) {
+    const posterUrl = toCloudinaryFirstFramePoster(cloudinaryVideoUrl);
+    if (posterUrl) return posterUrl;
+  }
+
   const base = filename.replace(/\.[^.]+$/, "");
   return `${root}images/posters/${base}.jpg`;
 }
